@@ -5,8 +5,13 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import net.usermanagement.model.Lesson;
 import net.usermanagement.model.User;
@@ -33,7 +38,6 @@ public class UserDAO {
 	}
 	
 	public List<Lesson> selectAllLessons() {
-		//System.out.println("Listing lessons...");
 
 		// using try-with-resources to avoid closing resources (boiler plate code)
 		List<Lesson> lessons = new ArrayList<>();
@@ -42,7 +46,6 @@ public class UserDAO {
 
 				// Step 2:Create a statement using connection object
 			PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_LESSONS);) {
-			//System.out.println(preparedStatement);
 			// Step 3: Execute the query or update query
 			ResultSet rs = preparedStatement.executeQuery();
 
@@ -50,13 +53,9 @@ public class UserDAO {
 			while (rs.next()) {
 				int id = rs.getInt("id");
 				String name = rs.getString("text");
-				//System.out.println("Adding lesson...");
-				//System.out.println(name);
-				//System.out.println(rs.getTimestamp("start_date").toString());
-				String start_date = rs.getTimestamp("start_date").toString();
-				String end_date = rs.getTimestamp("end_date").toString();
+				String start_date = (rs.getTimestamp("start_date").toString()).substring(0, (rs.getTimestamp("start_date").toString()).length() - 5);
+				String end_date = (rs.getTimestamp("end_date").toString()).substring(0, (rs.getTimestamp("end_date").toString()).length() - 5);
 				String userList = rs.getString("users");
-				//Process userLists
 				
 				lessons.add(new Lesson(id, name, start_date, end_date));
 			}
@@ -89,7 +88,6 @@ public class UserDAO {
 			preparedStatement.setString(1, user.getName());
 			preparedStatement.setString(2, user.getEmail());
 			preparedStatement.setString(3, user.getNumber());
-			//System.out.println(preparedStatement);
 			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
 			printSQLException(e);
@@ -109,12 +107,11 @@ public class UserDAO {
 		return rowUpdated;
 	}	
 	
-	public void insertLesson(Lesson lesson, String[] weeks, String userList) throws SQLException {
+	public void insertLesson(Lesson lesson, int weeks, String userList) throws SQLException {
 		// try-with-resource statement will auto close the connection.
 		try (Connection connection = getConnection();
 				PreparedStatement preparedStatement = connection.prepareStatement(INSERT_LESSONS_SQL)) {
 			String start_date = lesson.getstart_date();
-			System.out.println(start_date);
 			String end_date = lesson.getend_date();
 			String name = lesson.getName();
 			preparedStatement.setString(1, start_date);
@@ -122,6 +119,35 @@ public class UserDAO {
 			preparedStatement.setString(3, name);
 			preparedStatement.setString(4, userList);
 			preparedStatement.executeUpdate();
+			Calendar calendar = Calendar.getInstance();
+			DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm");
+			Timestamp sq = null;
+			if (weeks>0) {
+				for (int i=0;i<weeks;i++) {
+					try {
+						calendar.setTime((Date)formatter.parse(start_date));
+					} catch (Exception e) {
+						;
+					}
+			        calendar.add(Calendar.DAY_OF_YEAR, 7);
+			        sq = new java.sql.Timestamp(calendar.getTime().getTime());
+			        start_date = sq.toString();
+			        System.out.println(start_date);
+			        preparedStatement.setString(1, start_date);
+			            
+			        try {
+						calendar.setTime((Date)formatter.parse(end_date));
+					} catch (Exception e) {
+						;
+					}
+			        calendar.add(Calendar.DAY_OF_YEAR, 7);
+			        sq = new java.sql.Timestamp(calendar.getTime().getTime());
+			        end_date = sq.toString();
+			        preparedStatement.setString(2, end_date);
+
+					preparedStatement.executeUpdate();
+				}
+			}
 		} catch (SQLException e) {
 			printSQLException(e);
 		}
@@ -134,7 +160,6 @@ public class UserDAO {
 				// Step 2:Create a statement using connection object
 				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_LESSON_BY_ID);) {
 			preparedStatement.setInt(1, id);
-			//System.out.println(preparedStatement);
 			// Step 3: Execute the query or update query
 			ResultSet rs = preparedStatement.executeQuery();
 
@@ -159,7 +184,6 @@ public class UserDAO {
 				// Step 2:Create a statement using connection object
 				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_LESSON_USERLIST_BY_ID);) {
 			preparedStatement.setInt(1, id);
-			//System.out.println(preparedStatement);
 			// Step 3: Execute the query or update query
 			ResultSet rs = preparedStatement.executeQuery();
 			// Step 4: Process the ResultSet object.
@@ -179,7 +203,6 @@ public class UserDAO {
 				// Step 2:Create a statement using connection object
 				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_USER_BY_ID);) {
 			preparedStatement.setInt(1, id);
-			//System.out.println(preparedStatement);
 			// Step 3: Execute the query or update query
 			ResultSet rs = preparedStatement.executeQuery();
 
@@ -205,7 +228,6 @@ public class UserDAO {
 
 				// Step 2:Create a statement using connection object
 			PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_USERS);) {
-			//System.out.println(preparedStatement);
 			// Step 3: Execute the query or update query
 			ResultSet rs = preparedStatement.executeQuery();
 

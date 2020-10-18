@@ -3,7 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <html>
 <head>
-<title>User Management Application</title>
+<title>Lesson Management Application</title>
 <link rel="stylesheet"
 	href="https://drive.google.com/uc?export=view&id=13NlAxVuxNzrD__kd5xZzQa9DOSH729Om">
 </head>
@@ -13,13 +13,8 @@
 		<nav class="navbar navbar-expand-md navbar-dark"
 			style="background-color: grey">
 			<div>
-				<a class="navbar-brand"> User Management App </a>
+				<a class="navbar-brand"> Lesson Management App </a>
 			</div>
-
-			<ul class="navbar-nav">
-				<li><a href="<%=request.getContextPath()%>/list"
-					class="nav-link">Users</a></li>
-			</ul>
 		</nav>
 	</header>
 	<br>
@@ -58,19 +53,20 @@
 				</fieldset>
 				
 				<fieldset class="form-group">
-				<label>User List</label>
+				<label>Add Students</label>
+				<br>
 				<c:forEach var="user" items="${listUser}">
-					<td><input type="checkbox" name="selectedUsers" value="${user.id}"></td>
 					<td>${user.name}</td>
+					<td><input type="checkbox" name="selectedUsers" value="${user.id}"></td>
+					<br>
 				</c:forEach>
 				</fieldset>
 
 				<fieldset class="form-group">
-				<label>multiple_week</label>
-				<c:forEach var="user" items="${listDate}">
-					<td><input type="checkbox" name="selectedWeeks" value="${user.id}"></td>
-					<td>${user.id}</td>
-				</c:forEach>
+					<label>Number of weekly repetitions to add</label>
+					<input type="text"
+					value="<c:out value='${lesson.weeks}' />" class="form-control"
+					name="weeks">
 				</fieldset>
 
 				<button type="submit" class="btn btn-success">Save</button>

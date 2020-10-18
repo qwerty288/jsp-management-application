@@ -3,7 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <html>
 <head>
-<title>User Management Application</title>
+<title>Lesson Management Application</title>
 <link rel="stylesheet"
 	href="https://drive.google.com/uc?export=view&id=13NlAxVuxNzrD__kd5xZzQa9DOSH729Om">
 </head>
@@ -13,13 +13,9 @@
 		<nav class="navbar navbar-expand-md navbar-dark"
 			style="background-color: grey">
 			<div>
-				<a class="navbar-brand"> User Management App </a>
+				<a class="navbar-brand"> Lesson Management App </a>
 			</div>
 
-			<ul class="navbar-nav">
-				<li><a href="<%=request.getContextPath()%>/list"
-					class="nav-link">Users</a></li>
-			</ul>
 		</nav>
 	</header>
 	<br>
@@ -63,9 +59,8 @@
 				<fieldset class="form-group">
 					<label>User Number</label> <input type="text"
 						value="<c:out value='${user.number}' />" class="form-control"
-						name="country">
+						name="number">
 				</fieldset>
-				Add lesson tickbox here
 				<button type="submit" class="btn btn-success">Save</button>
 				</form>
 			</div>
