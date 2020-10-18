@@ -4,7 +4,7 @@ import java.util.*;
 public class Lesson {
 	protected int id;
 	protected String name;
-	protected String start_date, end_date;
+	protected String start_date, end_date, weeks;
 	protected String[] userList;
 
 	public Lesson() {
@@ -48,6 +48,12 @@ public class Lesson {
 	}
 	public void setend_date(String end_date) {
 		this.end_date = end_date;
+	}
+	public String getweeks() {
+		return weeks;
+	}
+	public void setweeks(String weeks) {
+		this.weeks = weeks;
 	}
 
 }

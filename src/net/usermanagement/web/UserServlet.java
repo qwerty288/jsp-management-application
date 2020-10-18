@@ -87,8 +87,8 @@ public class UserServlet extends HttpServlet {
 			throws SQLException, IOException {
 		String name = request.getParameter("name");
 		String email = request.getParameter("email");
-		String country = request.getParameter("country");
-		User newUser = new User(name, email, country);
+		String number = request.getParameter("number");
+		User newUser = new User(name, email, number);
 		userDAO.insertUser(newUser);
 		response.sendRedirect("list");
 	}	
@@ -96,18 +96,21 @@ public class UserServlet extends HttpServlet {
 	private void insertLesson(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException {
 		String[] selectedUsers = request.getParameterValues("selectedUsers");
-		String[] selectedWeeks = request.getParameterValues("selectedWeeks");
+		String temp = request.getParameter("weeks");
+		int selectedWeeks = 0;
+		if (!temp.equals("")) {
+			selectedWeeks = Integer.valueOf(request.getParameter("weeks"));
+		}
 		String start_date =  request.getParameter("start_date");
 		String end_date = request.getParameter("end_date");
 		String name = request.getParameter("name");
 		Lesson newLesson = new Lesson(name, start_date, end_date);
 		userDAO.insertLesson(newLesson, selectedWeeks, Arrays.toString(selectedUsers).replace("[", "").replace("]", "").replace(" ", ""));
-		response.sendRedirect("list");//listAll?
+		response.sendRedirect("list");
 	}
 
 	private void listLesson(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException, ServletException {
-		//System.out.println("listLesson called in servlet");
 		List<Lesson> listLesson = userDAO.selectAllLessons();
 		request.setAttribute("listLesson", listLesson);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("user-list.jsp");
@@ -116,10 +119,8 @@ public class UserServlet extends HttpServlet {
 	
 	private void listAll(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException, ServletException {
-		//System.out.println("listAll called in servlet");
 		List<User> listUser = userDAO.selectAllUsers();
 		request.setAttribute("listUser", listUser);
-		//System.out.println("listLesson called in servlet");
 		List<Lesson> listLesson = userDAO.selectAllLessons();
 		request.setAttribute("listLesson", listLesson);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("user-list.jsp");
@@ -128,7 +129,6 @@ public class UserServlet extends HttpServlet {
 
 	private void listUser(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException, ServletException {
-		//System.out.println("listUser called in servlet");
 		List<User> listUser = userDAO.selectAllUsers();
 		request.setAttribute("listUser", listUser);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("user-list.jsp");
@@ -198,8 +198,6 @@ public class UserServlet extends HttpServlet {
 				}
 			}
 		}
-		//2.
-		//need to check users
 		request.setAttribute("listUser", listUser);
 		dispatcher.forward(request, response);
 	}	
@@ -209,9 +207,9 @@ public class UserServlet extends HttpServlet {
 		int id = Integer.parseInt(request.getParameter("id"));
 		String name = request.getParameter("name");
 		String email = request.getParameter("email");
-		String country = request.getParameter("country");
+		String number = request.getParameter("number");
 
-		User book = new User(id, name, email, country);
+		User book = new User(id, name, email, number);
 		userDAO.updateUser(book);
 		response.sendRedirect("list");
 	}
