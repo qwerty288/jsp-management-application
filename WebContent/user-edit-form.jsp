@@ -32,10 +32,10 @@
 				<caption>
 					<h2>
 						<c:if test="${user != null}">
-            			Edit User
+            			Edit Student
             		</c:if>
 						<c:if test="${user == null}">
-            			Add New User
+            			Add New Student
             		</c:if>
 					</h2>
 				</caption>
@@ -45,19 +45,19 @@
 				</c:if>
 
 				<fieldset class="form-group">
-					<label>User Name</label> <input type="text"
+					<label>Student Name</label> <input type="text"
 						value="<c:out value='${user.name}' />" class="form-control"
 						name="name" required="required">
 				</fieldset>
 
 				<fieldset class="form-group">
-					<label>User Email</label> <input type="text"
+					<label>Student Email</label> <input type="text"
 						value="<c:out value='${user.email}' />" class="form-control"
 						name="email">
 				</fieldset>
 
 				<fieldset class="form-group">
-					<label>User Number</label> <input type="text"
+					<label>Student Number</label> <input type="text"
 						value="<c:out value='${user.number}' />" class="form-control"
 						name="number">
 				</fieldset>
