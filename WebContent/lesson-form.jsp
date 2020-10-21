@@ -55,9 +55,9 @@
 				<fieldset class="form-group">
 				<label>Add Students</label>
 				<br>
-				<c:forEach var="user" items="${listUser}">
-					<td>${user.name}</td>
-					<td><input type="checkbox" name="selectedUsers" value="${user.id}"></td>
+				<c:forEach var="student" items="${listStudent}">
+					<td>${student.name}</td>
+					<td><input type="checkbox" name="selectedUsers" value="${student.id}"></td>
 					<br>
 				</c:forEach>
 				</fieldset>

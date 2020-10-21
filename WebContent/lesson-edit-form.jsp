@@ -43,14 +43,14 @@
 				<fieldset class="form-group">
 				<label>Students in lesson</label>
 				<br>
-				<c:forEach var="user" items="${listUser}">
-					<c:if test="${user.checked != null}">
-					<td>${user.name}</td>
-					<td><input type="checkbox" checked name="selectedUsers" value="${user.id}"></td>
+				<c:forEach var="student" items="${listStudent}">
+					<c:if test="${student.checked != null}">
+					<td>${student.name}</td>
+					<td><input type="checkbox" checked name="selectedUsers" value="${student.id}"></td>
 					</c:if>
-					<c:if test="${user.checked == null}">
-					<td>${user.name}</td>
-					<td><input type="checkbox" name="selectedUsers" value="${user.id}"></td>
+					<c:if test="${student.checked == null}">
+					<td>${student.name}</td>
+					<td><input type="checkbox" name="selectedUsers" value="${student.id}"></td>
 					</c:if>
 					<br>
 				</c:forEach>

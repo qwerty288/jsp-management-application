@@ -1,7 +1,7 @@
-package net.usermanagement.model;
+package net.management.model;
 import java.util.*;
 
-public class User {
+public class Student {
 	protected int id;
 	protected String name;
 	protected String email;
@@ -9,10 +9,10 @@ public class User {
 	protected String checked;
 	protected ArrayList<String> lessons;//needs to be updated after each lesson add!!
 
-	public User() {
+	public Student() {
 	}
 
-	public User(String name, String email, String number) {
+	public Student(String name, String email, String number) {
 		super();
 		this.name = name;
 		this.email = email;
@@ -20,7 +20,7 @@ public class User {
 		this.checked = null;
 	}
 
-	public User(int id, String name, String email, String number) {
+	public Student(int id, String name, String email, String number) {
 		super();
 		this.id = id;
 		this.name = name;

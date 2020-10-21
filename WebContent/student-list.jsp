@@ -44,7 +44,7 @@
 				</thead>
 				<tbody>
 					<!--   for (Todo todo: todos) {  -->
-					<c:forEach var="user" items="${listUser}">
+					<c:forEach var="user" items="${listStudent}">
 
 						<tr>
 							<td><c:out value="${user.id}" /></td>

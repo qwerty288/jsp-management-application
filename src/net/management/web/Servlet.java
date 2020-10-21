@@ -1,4 +1,4 @@
-package net.usermanagement.web;
+package net.management.web;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -12,19 +12,19 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.usermanagement.dao.UserDAO;
-import net.usermanagement.model.Lesson;
-import net.usermanagement.model.User;
+import net.management.dao.DAO;
+import net.management.model.Lesson;
+import net.management.model.Student;
 
 
 
 @WebServlet("/")
-public class UserServlet extends HttpServlet {
+public class Servlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private UserDAO userDAO;
+	private DAO dao;
 
 	public void init() {
-		userDAO = new UserDAO();
+		dao = new DAO();
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -42,13 +42,13 @@ public class UserServlet extends HttpServlet {
 				showNewForm(request, response);
 				break;
 			case "/insert":
-				insertUser(request, response);
+				insertStudent(request, response);
 				break;
 			case "/insertLesson":
 				insertLesson(request, response);
 				break;
 			case "/delete":
-				deleteUser(request, response);
+				deleteStudent(request, response);
 				break;
 			case "/deleteLesson":
 				deleteLesson(request, response);
@@ -60,7 +60,7 @@ public class UserServlet extends HttpServlet {
 				showEditLessonForm(request, response);
 				break;
 			case "/update":
-				updateUser(request, response);
+				updateStudent(request, response);
 				break;
 			case "/updateLesson":
 				updateLesson(request, response);
@@ -68,8 +68,8 @@ public class UserServlet extends HttpServlet {
 			case "/newLesson":
 				showLessonForm(request, response);
 				break;
-			case "/listUser":
-				listUser(request, response);
+			case "/listStudent":
+				listStudent(request, response);
 				break;
 			case "/listLesson":
 				listLesson(request, response);
@@ -83,19 +83,19 @@ public class UserServlet extends HttpServlet {
 		}
 	}
 
-	private void insertUser(HttpServletRequest request, HttpServletResponse response)
+	private void insertStudent(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException {
 		String name = request.getParameter("name");
 		String email = request.getParameter("email");
 		String number = request.getParameter("number");
-		User newUser = new User(name, email, number);
-		userDAO.insertUser(newUser);
+		Student newStudent = new Student(name, email, number);
+		dao.insertStudent(newStudent);
 		response.sendRedirect("list");
 	}	
 	
 	private void insertLesson(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException {
-		String[] selectedUsers = request.getParameterValues("selectedUsers");
+		String[] selectedStudents = request.getParameterValues("selectedStudents");
 		String temp = request.getParameter("weeks");
 		int selectedWeeks = 0;
 		if (!temp.equals("")) {
@@ -105,49 +105,49 @@ public class UserServlet extends HttpServlet {
 		String end_date = request.getParameter("end_date");
 		String name = request.getParameter("name");
 		Lesson newLesson = new Lesson(name, start_date, end_date);
-		userDAO.insertLesson(newLesson, selectedWeeks, Arrays.toString(selectedUsers).replace("[", "").replace("]", "").replace(" ", ""));
+		dao.insertLesson(newLesson, selectedWeeks, Arrays.toString(selectedStudents).replace("[", "").replace("]", "").replace(" ", ""));
 		response.sendRedirect("list");
 	}
 
 	private void listLesson(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException, ServletException {
-		List<Lesson> listLesson = userDAO.selectAllLessons();
+		List<Lesson> listLesson = dao.selectAllLessons();
 		request.setAttribute("listLesson", listLesson);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("user-list.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("student-list.jsp");
 		dispatcher.forward(request, response);
 	}
 	
 	private void listAll(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException, ServletException {
-		List<User> listUser = userDAO.selectAllUsers();
-		request.setAttribute("listUser", listUser);
-		List<Lesson> listLesson = userDAO.selectAllLessons();
+		List<Student> listStudent = dao.selectAllStudents();
+		request.setAttribute("listStudent", listStudent);
+		List<Lesson> listLesson = dao.selectAllLessons();
 		request.setAttribute("listLesson", listLesson);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("user-list.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("student-list.jsp");
 		dispatcher.forward(request, response);
 	}
 
-	private void listUser(HttpServletRequest request, HttpServletResponse response)
+	private void listStudent(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException, ServletException {
-		List<User> listUser = userDAO.selectAllUsers();
-		request.setAttribute("listUser", listUser);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("user-list.jsp");
+		List<Student> listStudent = dao.selectAllStudents();
+		request.setAttribute("listStudent", listStudent);
+		RequestDispatcher dispatcher = request.getRequestDispatcher("student-list.jsp");
 		dispatcher.forward(request, response);
 	}
 
 	private void showNewForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		RequestDispatcher dispatcher = request.getRequestDispatcher("user-form.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("student-form.jsp");
 		dispatcher.forward(request, response);
 	}
 
 	private void showLessonForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		List<User> listUser = userDAO.selectAllUsers();
-		request.setAttribute("listUser", listUser);	
-		List<User> listDate = new ArrayList<>();
+		List<Student> listStudent = dao.selectAllStudents();
+		request.setAttribute("listStudent", listStudent);	
+		List<Student> listDate = new ArrayList<>();
 		for (int i=0;i<52;i++) {
-			listDate.add(new User(i, "", "", ""));
+			listDate.add(new Student(i, "", "", ""));
 		}
 		request.setAttribute("listDate", listDate);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("lesson-form.jsp");
@@ -157,9 +157,9 @@ public class UserServlet extends HttpServlet {
 	private void showEditForm(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, ServletException, IOException {
 		int id = Integer.parseInt(request.getParameter("id"));
-		User existingUser = userDAO.selectUser(id);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("user-edit-form.jsp");
-		request.setAttribute("user", existingUser);
+		Student existingStudent = dao.selectStudent(id);
+		RequestDispatcher dispatcher = request.getRequestDispatcher("student-edit-form.jsp");
+		request.setAttribute("student", existingStudent);
 		dispatcher.forward(request, response);
 	}
 
@@ -172,45 +172,39 @@ public class UserServlet extends HttpServlet {
 	private void showEditLessonForm(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, ServletException, IOException {
 		int id = Integer.parseInt(request.getParameter("id"));
-		Lesson existingLesson = userDAO.selectLesson(id);
+		Lesson existingLesson = dao.selectLesson(id);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("lesson-edit-form.jsp");
 		request.setAttribute("lesson", existingLesson);
-		List<User> listUser = userDAO.selectAllUsers();
-		//Need to check users
-		//1. get string
-		String userListFromLesson = userDAO.getLessonUserList(id);
-		//2. process string and set users as checked
+		List<Student> listStudent = dao.selectAllStudents();
+		String studentListFromLesson = dao.getLessonStudentList(id);
 		int stringPos = 0;
 		String tempString = "     ";
-		for (int i=0;i<userListFromLesson.length();i++) {
-			System.out.println("i:"+i);
-			System.out.println(userListFromLesson.charAt(i));
-			if (userListFromLesson.charAt(i)==",".charAt(0))  {
-				//set checked here
-				listUser.get(Integer.valueOf(tempString.trim())-1).setChecked();
+		for (int i=0;i<studentListFromLesson.length();i++) {
+			if (studentListFromLesson.charAt(i)==",".charAt(0))  {
+				listStudent.get(Integer.valueOf(tempString.trim())-1).setChecked();
 				stringPos = 0;
 				tempString = "      ";
 			} else {
-				tempString = addChar(tempString, userListFromLesson.charAt(i), stringPos);
+				tempString = addChar(tempString, studentListFromLesson.charAt(i), stringPos);
 				stringPos++;
-				if (i==userListFromLesson.length()-1) {
-					listUser.get(Integer.valueOf(tempString.trim())-1).setChecked();
+				if (i==studentListFromLesson.length()-1) {
+					listStudent.get(Integer.valueOf(tempString.trim())-1).setChecked();
 				}
 			}
 		}
-		request.setAttribute("listUser", listUser);
+		request.setAttribute("listStudent", listStudent);
 		dispatcher.forward(request, response);
 	}	
 	
-	private void updateUser(HttpServletRequest request, HttpServletResponse response)
+	private void updateStudent(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException {
 		int id = Integer.parseInt(request.getParameter("id"));
 		String name = request.getParameter("name");
 		String email = request.getParameter("email");
 		String number = request.getParameter("number");
 
-		User book = new User(id, name, email, number);
-		userDAO.updateUser(book);
+		Student book = new Student(id, name, email, number);
+		dao.updateStudent(book);
 		response.sendRedirect("list");
 	}
 	
@@ -220,23 +214,23 @@ public class UserServlet extends HttpServlet {
 		String name = request.getParameter("name");
 		String start_date = request.getParameter("start_date");
 		String end_date = request.getParameter("end_date");
-		String[] selectedUsers = request.getParameterValues("selectedUsers");
+		String[] selectedStudents = request.getParameterValues("selectedStudents");
 		Lesson book = new Lesson(id, name, start_date, end_date);
-		userDAO.updateLesson(book, Arrays.toString(selectedUsers).replace("[", "").replace("]", "").replace(" ", ""));
+		dao.updateLesson(book, Arrays.toString(selectedStudents).replace("[", "").replace("]", "").replace(" ", ""));
 		response.sendRedirect("list");
 	}	
 	
-	private void deleteUser(HttpServletRequest request, HttpServletResponse response)
+	private void deleteStudent(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException {
 		int id = Integer.parseInt(request.getParameter("id"));
-		userDAO.deleteUser(id);
+		dao.deleteStudent(id);
 		response.sendRedirect("list");
 	}
 
 	private void deleteLesson(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException {
 		int id = Integer.parseInt(request.getParameter("id"));
-		userDAO.deleteLesson(id);
+		dao.deleteLesson(id);
 		response.sendRedirect("list");
 	}
 	

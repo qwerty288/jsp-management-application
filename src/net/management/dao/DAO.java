@@ -1,4 +1,4 @@
-package net.usermanagement.dao;
+package net.management.dao;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,15 +8,16 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+
+import net.management.model.Lesson;
+import net.management.model.Student;
+
 import java.util.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import net.usermanagement.model.Lesson;
-import net.usermanagement.model.User;
-
-public class UserDAO {
+public class DAO {
 	private String jdbcURL = "jdbc:mysql://localhost/demo?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true";
 	private String jdbcUsername = "root";
 	private String jdbcPassword = "root";
@@ -25,16 +26,16 @@ public class UserDAO {
 			+ " (?, ?, ?);";
 	private static final String INSERT_LESSONS_SQL = "INSERT INTO events" + "  (start_date, end_date, text, users) VALUES "
 			+ " (?, ?, ?, ?);";
-	private static final String SELECT_USER_BY_ID = "select id,name,email,number from users where id =?";
+	private static final String SELECT_STUDENT_BY_ID = "select id,name,email,number from users where id =?";
 	private static final String SELECT_LESSON_BY_ID = "select id,start_date,end_date,text from events where id =?";
 	private static final String SELECT_LESSON_USERLIST_BY_ID = "select users from events where id =?";
-	private static final String SELECT_ALL_USERS = "select * from users";
+	private static final String SELECT_ALL_STUDENTS = "select * from users";
 	private static final String SELECT_ALL_LESSONS = "select * from events";
-	private static final String DELETE_USERS_SQL = "delete from users where id = ?;";
+	private static final String DELETE_STUDENTS_SQL = "delete from users where id = ?;";
 	private static final String DELETE_LESSONS_SQL = "delete from events where id = ?;";
 	private static final String UPDATE_USERS_SQL = "update users set name = ?,email= ?, number =? where id = ?;";
 	private static final String UPDATE_LESSONS_SQL = "update events set text =?, users =? where id = ?;";
-	public UserDAO() {
+	public DAO() {
 	}
 	/**
 	* Reads the SQL Table and returns a list of lesson objects.
@@ -66,17 +67,17 @@ public class UserDAO {
 	}
 	/**
 	* Inserts a new student into the SQL Table.
-	* @param user The user object, containing information about the student to be added.
+	* @param student The user object, containing information about the student to be added.
 	*/
-	public void insertUser(User user) throws SQLException {
+	public void insertStudent(Student student) throws SQLException {
 		// Establish connection with the SQL Database.
 		try (Connection connection = getConnection();
 		     		// Create a statement using connection object.
 				PreparedStatement preparedStatement = connection.prepareStatement(INSERT_USERS_SQL)) {
 			// Update statement parameters.
-			preparedStatement.setString(1, user.getName());
-			preparedStatement.setString(2, user.getEmail());
-			preparedStatement.setString(3, user.getNumber());
+			preparedStatement.setString(1, student.getName());
+			preparedStatement.setString(2, student.getEmail());
+			preparedStatement.setString(3, student.getNumber());
 			// Execute the query.
 			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
@@ -86,9 +87,9 @@ public class UserDAO {
 	/**
 	* Updates the details of an existing lesson in the SQL Table.
 	* @param lesson The lesson object, containing the lesson start-date, end-date and name of the lesson.
-	* @param userList A string containing the list of ids of expected students in the lesson.
+	* @param studentList A string containing the list of ids of expected students in the lesson.
 	*/
-	public boolean updateLesson(Lesson lesson, String userList) throws SQLException {
+	public boolean updateLesson(Lesson lesson, String studentList) throws SQLException {
 		boolean rowUpdated;
 		// Establish connection with the SQL Database.
 		try (Connection connection = getConnection();
@@ -96,7 +97,7 @@ public class UserDAO {
 				PreparedStatement statement = connection.prepareStatement(UPDATE_LESSONS_SQL);) {
 			// Update statement parameters.
 			statement.setString(1, lesson.getName());
-			statement.setString(2, userList);
+			statement.setString(2, studentList);
 			statement.setInt(3, lesson.getId());
 			// Execute the query.
 			rowUpdated = statement.executeUpdate() > 0;
@@ -107,9 +108,9 @@ public class UserDAO {
 	* Inserts a new lesson into the SQL Table.
 	* @param lesson The lesson object, containing the lesson start-date, end-date and name of the lesson.
 	* @param weeks The number of consecutive weeks to add the lesson to.
-	* @param userList A string containing the list of ids of expected students in the lesson.
+	* @param studentList A string containing the list of ids of expected students in the lesson.
 	**/	
-	public void insertLesson(Lesson lesson, int weeks, String userList) throws SQLException {
+	public void insertLesson(Lesson lesson, int weeks, String studentList) throws SQLException {
 		// Establish connection with the SQL Database.
 		try (Connection connection = getConnection();
 		     		// Create a statement using connection object.
@@ -121,7 +122,7 @@ public class UserDAO {
 			preparedStatement.setString(1, start_date);
 			preparedStatement.setString(2, end_date);
 			preparedStatement.setString(3, name);
-			preparedStatement.setString(4, userList);
+			preparedStatement.setString(4, studentList);
 			// Execute the query.
 			preparedStatement.executeUpdate();
 			// Repeat above steps to add the lesson to additional consecutive weeks.
@@ -138,7 +139,6 @@ public class UserDAO {
 			        	calendar.add(Calendar.DAY_OF_YEAR, 7);
 			      	  	sq = new java.sql.Timestamp(calendar.getTime().getTime());
 			        	start_date = sq.toString();
-			        	System.out.println(start_date);
 			        	preparedStatement.setString(1, start_date);
 			            
 			        	try {
@@ -190,7 +190,7 @@ public class UserDAO {
 	* @param id The id of the lesson.
 	* @return A string containing the list of IDs of expected students.
 	**/
-	public String getLessonUserList(int id) {
+	public String getLessonStudentList(int id) {
 		String userList = null;
 		// Establish connection with the SQL Database.
 		try (Connection connection = getConnection();
@@ -213,13 +213,13 @@ public class UserDAO {
 	* @param id the ID of the user to return.
 	* @return The user object.
 	**/	
-	public User selectUser(int id) {
+	public Student selectStudent(int id) {
 		// Declare user object.
-		User user = null;
+		Student user = null;
 		// Establish connection to SQL Database.
 		try (Connection connection = getConnection();
 				// Create statement using connection object.
-				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_USER_BY_ID);) {
+				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_STUDENT_BY_ID);) {
 			preparedStatement.setInt(1, id);
 			// Execute the query.
 			ResultSet rs = preparedStatement.executeQuery();
@@ -228,7 +228,7 @@ public class UserDAO {
 				String name = rs.getString("name");
 				String email = rs.getString("email");
 				String number = rs.getString("number");
-				user = new User(id, name, email, number);
+				user = new Student(id, name, email, number);
 			}
 		} catch (SQLException e) {
 			printSQLException(e);
@@ -240,13 +240,13 @@ public class UserDAO {
 	* Reads the SQL Table and returns a list of all the users.
 	* @return A list of users, sorted by ID.
 	**/
-	public List<User> selectAllUsers() {
+	public List<Student> selectAllStudents() {
 		// Declare empty list.
-		List<User> users = new ArrayList<>();
+		List<Student> users = new ArrayList<>();
 		// Establish connection to SQL Database.
 		try (Connection connection = getConnection();
 			// Create a statement using connection object.
-			PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_USERS);) {
+			PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_STUDENTS);) {
 			// Execute the query.
 			ResultSet rs = preparedStatement.executeQuery();
 			// Process the ResultSet object.
@@ -255,7 +255,7 @@ public class UserDAO {
 				String name = rs.getString("name");
 				String email = rs.getString("email");
 				String number = rs.getString("number");
-				users.add(new User(id, name, email, number));
+				users.add(new Student(id, name, email, number));
 			}
 		} catch (SQLException e) {
 			printSQLException(e);
@@ -268,12 +268,12 @@ public class UserDAO {
 	* @param id The ID of the user to delete.
 	* @return true if the operation was successful, or false otherwise.
 	**/
-	public boolean deleteUser(int id) throws SQLException {
+	public boolean deleteStudent(int id) throws SQLException {
 		boolean rowDeleted;
 		// Establish connection to SQL Database.
 		try (Connection connection = getConnection();
 		     	// Create a statement using connection object.
-				PreparedStatement statement = connection.prepareStatement(DELETE_USERS_SQL);) {
+				PreparedStatement statement = connection.prepareStatement(DELETE_STUDENTS_SQL);) {
 			// Update statement parameters.
 			statement.setInt(1, id);
 			// Execute the query.
@@ -300,21 +300,21 @@ public class UserDAO {
 		return rowDeleted;
 	}	
 	/**
-	* Updates the details of an existing user in the SQL Table.
-	* @param user The user object, containing the user start-date, end-date and name.
+	* Updates the details of an existing student in the SQL Table.
+	* @param student The user object, containing the user start-date, end-date and name.
 	* @return true if the operation was successful, or false otherwise.
 	*/	
-	public boolean updateUser(User user) throws SQLException {
+	public boolean updateStudent(Student student) throws SQLException {
 		boolean rowUpdated;
 		// Establish connection to SQL Database.
 		try (Connection connection = getConnection();
 		     	// Create a statement using the connection object.
 				PreparedStatement statement = connection.prepareStatement(UPDATE_USERS_SQL);) {
 			// Update statement parameters.
-			statement.setString(1, user.getName());
-			statement.setString(2, user.getEmail());
-			statement.setString(3, user.getNumber());
-			statement.setInt(4, user.getId());
+			statement.setString(1, student.getName());
+			statement.setString(2, student.getEmail());
+			statement.setString(3, student.getNumber());
+			statement.setInt(4, student.getId());
 			// Execute the query.
 			rowUpdated = statement.executeUpdate() > 0;
 		}
