@@ -36,36 +36,291 @@ public class UserDAO {
 	private static final String UPDATE_LESSONS_SQL = "update events set text =?, users =? where id = ?;";
 	public UserDAO() {
 	}
-	
+	/**
+	* Reads the SQL Table and returns a list of lesson objects.
+	* @return A list of lessons, sorted by ID.
+	**/
 	public List<Lesson> selectAllLessons() {
-
-		// using try-with-resources to avoid closing resources (boiler plate code)
+		// Declare empty list.
 		List<Lesson> lessons = new ArrayList<>();
-		// Step 1: Establishing a Connection
+		// Establish connection to SQL database.
 		try (Connection connection = getConnection();
-
-				// Step 2:Create a statement using connection object
+			// Create a statement using connection object.
 			PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_LESSONS);) {
-			// Step 3: Execute the query or update query
+			// Execute the query 
 			ResultSet rs = preparedStatement.executeQuery();
-
-			// Step 4: Process the ResultSet object.
+			// Process the ResultSet object, and populate the list.
 			while (rs.next()) {
 				int id = rs.getInt("id");
 				String name = rs.getString("text");
 				String start_date = (rs.getTimestamp("start_date").toString()).substring(0, (rs.getTimestamp("start_date").toString()).length() - 5);
 				String end_date = (rs.getTimestamp("end_date").toString()).substring(0, (rs.getTimestamp("end_date").toString()).length() - 5);
 				String userList = rs.getString("users");
-				
 				lessons.add(new Lesson(id, name, start_date, end_date));
 			}
 		} catch (SQLException e) {
 			printSQLException(e);
 		}
+		// Return populated list.
 		return lessons;
 	}
-	
-	
+	/**
+	* Inserts a new student into the SQL Table.
+	* @param user The user object, containing information about the student to be added.
+	*/
+	public void insertUser(User user) throws SQLException {
+		// Establish connection with the SQL Database.
+		try (Connection connection = getConnection();
+		     		// Create a statement using connection object.
+				PreparedStatement preparedStatement = connection.prepareStatement(INSERT_USERS_SQL)) {
+			// Update statement parameters.
+			preparedStatement.setString(1, user.getName());
+			preparedStatement.setString(2, user.getEmail());
+			preparedStatement.setString(3, user.getNumber());
+			// Execute the query.
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) {
+			printSQLException(e);
+		}
+	}
+	/**
+	* Updates the details of an existing lesson in the SQL Table.
+	* @param lesson The lesson object, containing the lesson start-date, end-date and name of the lesson.
+	* @param userList A string containing the list of ids of expected students in the lesson.
+	*/
+	public boolean updateLesson(Lesson lesson, String userList) throws SQLException {
+		boolean rowUpdated;
+		// Establish connection with the SQL Database.
+		try (Connection connection = getConnection();
+		     		// Create a statement using connection object.
+				PreparedStatement statement = connection.prepareStatement(UPDATE_LESSONS_SQL);) {
+			// Update statement parameters.
+			statement.setString(1, lesson.getName());
+			statement.setString(2, userList);
+			statement.setInt(3, lesson.getId());
+			// Execute the query.
+			rowUpdated = statement.executeUpdate() > 0;
+		}
+		return rowUpdated;
+	}	
+	/**
+	* Inserts a new lesson into the SQL Table.
+	* @param lesson The lesson object, containing the lesson start-date, end-date and name of the lesson.
+	* @param weeks The number of consecutive weeks to add the lesson to.
+	* @param userList A string containing the list of ids of expected students in the lesson.
+	**/	
+	public void insertLesson(Lesson lesson, int weeks, String userList) throws SQLException {
+		// Establish connection with the SQL Database.
+		try (Connection connection = getConnection();
+		     		// Create a statement using connection object.
+				PreparedStatement preparedStatement = connection.prepareStatement(INSERT_LESSONS_SQL)) {
+			// Update statement parameters.
+			String start_date = lesson.getstart_date();
+			String end_date = lesson.getend_date();
+			String name = lesson.getName();
+			preparedStatement.setString(1, start_date);
+			preparedStatement.setString(2, end_date);
+			preparedStatement.setString(3, name);
+			preparedStatement.setString(4, userList);
+			// Execute the query.
+			preparedStatement.executeUpdate();
+			// Repeat above steps to add the lesson to additional consecutive weeks.
+			Calendar calendar = Calendar.getInstance();
+			DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm");
+			Timestamp sq = null;
+			if (weeks>0) {
+				for (int i=0;i<weeks;i++) {
+					try {
+						calendar.setTime((Date)formatter.parse(start_date));
+					} catch (Exception e) {
+						;
+					}
+			        	calendar.add(Calendar.DAY_OF_YEAR, 7);
+			      	  	sq = new java.sql.Timestamp(calendar.getTime().getTime());
+			        	start_date = sq.toString();
+			        	System.out.println(start_date);
+			        	preparedStatement.setString(1, start_date);
+			            
+			        	try {
+						calendar.setTime((Date)formatter.parse(end_date));
+					} catch (Exception e) {
+						;
+					}
+			        	calendar.add(Calendar.DAY_OF_YEAR, 7);
+			        	sq = new java.sql.Timestamp(calendar.getTime().getTime());
+			        	end_date = sq.toString();
+			        	preparedStatement.setString(2, end_date);
+					preparedStatement.executeUpdate();
+				}
+			}
+		} catch (SQLException e) {
+			printSQLException(e);
+		}
+	}
+	/**
+	* Returns a lesson with the given ID from the SQL Table.
+	* @param id The ID of the lesson.
+	* @return the lesson object, containing all the lesson name, start date and end date.
+	**/
+	public Lesson selectLesson(int id) {
+		// Declare lesson object.
+		Lesson lesson = null;
+		// Establish connection with the SQL Database.
+		try (Connection connection = getConnection();
+				// Create a statement using connection object
+				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_LESSON_BY_ID);) {
+			preparedStatement.setInt(1, id);
+			// Execute the query.
+			ResultSet rs = preparedStatement.executeQuery();
+			// Process the ResultSet object.
+			while (rs.next()) {
+				String name = rs.getString("text");
+				String start_date = rs.getString("start_date");
+				String end_date = rs.getString("end_date");
+				lesson = new Lesson(id, name, start_date, end_date);
+			}
+		} catch (SQLException e) {
+			printSQLException(e);
+		}
+		// Return lesson object.
+		return lesson;
+	}	
+	/**
+	* Returns the list of expected students for a lesson with a given ID.
+	* @param id The id of the lesson.
+	* @return A string containing the list of IDs of expected students.
+	**/
+	public String getLessonUserList(int id) {
+		String userList = null;
+		// Establish connection with the SQL Database.
+		try (Connection connection = getConnection();
+				// Create a statement using connection object.
+				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_LESSON_USERLIST_BY_ID);) {
+			preparedStatement.setInt(1, id);
+			// Execute the query.
+			ResultSet rs = preparedStatement.executeQuery();
+			// Process the ResultSet object.
+			while (rs.next()) {
+				userList = rs.getString("users");
+			}
+		} catch (SQLException e) {
+			printSQLException(e);
+		}
+		return userList;
+	}		
+	/**
+	* Returns a user with a given ID from the SQL Database.
+	* @param id the ID of the user to return.
+	* @return The user object.
+	**/	
+	public User selectUser(int id) {
+		// Declare user object.
+		User user = null;
+		// Establish connection to SQL Database.
+		try (Connection connection = getConnection();
+				// Create statement using connection object.
+				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_USER_BY_ID);) {
+			preparedStatement.setInt(1, id);
+			// Execute the query.
+			ResultSet rs = preparedStatement.executeQuery();
+			// Process the ResultSet object.
+			while (rs.next()) {
+				String name = rs.getString("name");
+				String email = rs.getString("email");
+				String number = rs.getString("number");
+				user = new User(id, name, email, number);
+			}
+		} catch (SQLException e) {
+			printSQLException(e);
+		}
+		// Return user object.
+		return user;
+	}
+	/**
+	* Reads the SQL Table and returns a list of all the users.
+	* @return A list of users, sorted by ID.
+	**/
+	public List<User> selectAllUsers() {
+		// Declare empty list.
+		List<User> users = new ArrayList<>();
+		// Establish connection to SQL Database.
+		try (Connection connection = getConnection();
+			// Create a statement using connection object.
+			PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_USERS);) {
+			// Execute the query.
+			ResultSet rs = preparedStatement.executeQuery();
+			// Process the ResultSet object.
+			while (rs.next()) {
+				int id = rs.getInt("id");
+				String name = rs.getString("name");
+				String email = rs.getString("email");
+				String number = rs.getString("number");
+				users.add(new User(id, name, email, number));
+			}
+		} catch (SQLException e) {
+			printSQLException(e);
+		}
+		// Return populated list.
+		return users;
+	}
+	/**
+	* Deletes a user with a given id, from the SQL Table.
+	* @param id The ID of the user to delete.
+	* @return true if the operation was successful, or false otherwise.
+	**/
+	public boolean deleteUser(int id) throws SQLException {
+		boolean rowDeleted;
+		// Establish connection to SQL Database.
+		try (Connection connection = getConnection();
+		     	// Create a statement using connection object.
+				PreparedStatement statement = connection.prepareStatement(DELETE_USERS_SQL);) {
+			// Update statement parameters.
+			statement.setInt(1, id);
+			// Execute the query.
+			rowDeleted = statement.executeUpdate() > 0;
+		}
+		return rowDeleted;
+	}
+	/**
+	* Deletes a lesson with a given id, from the SQL Table.
+	* @param id The id of the lesson to delete
+	* @return true if the operation was successful, or false otherwise.
+	**/
+	public boolean deleteLesson(int id) throws SQLException {
+		boolean rowDeleted;
+		// Establish connection to SQL Database.
+		try (Connection connection = getConnection();
+		     	// Create a statement using the connection object.
+				PreparedStatement statement = connection.prepareStatement(DELETE_LESSONS_SQL);) {
+			// Update statement parameters.
+			statement.setInt(1, id);
+			// Execute the query.
+			rowDeleted = statement.executeUpdate() > 0;
+		}
+		return rowDeleted;
+	}	
+	/**
+	* Updates the details of an existing user in the SQL Table.
+	* @param user The user object, containing the user start-date, end-date and name.
+	* @return true if the operation was successful, or false otherwise.
+	*/	
+	public boolean updateUser(User user) throws SQLException {
+		boolean rowUpdated;
+		// Establish connection to SQL Database.
+		try (Connection connection = getConnection();
+		     	// Create a statement using the connection object.
+				PreparedStatement statement = connection.prepareStatement(UPDATE_USERS_SQL);) {
+			// Update statement parameters.
+			statement.setString(1, user.getName());
+			statement.setString(2, user.getEmail());
+			statement.setString(3, user.getNumber());
+			statement.setInt(4, user.getId());
+			// Execute the query.
+			rowUpdated = statement.executeUpdate() > 0;
+		}
+		return rowUpdated;
+	}
+
 	protected Connection getConnection() {
 		Connection connection = null;
 		try {
@@ -79,204 +334,6 @@ public class UserDAO {
 			e.printStackTrace();
 		}
 		return connection;
-	}
-
-	public void insertUser(User user) throws SQLException {
-		// try-with-resource statement will auto close the connection.
-		try (Connection connection = getConnection();
-				PreparedStatement preparedStatement = connection.prepareStatement(INSERT_USERS_SQL)) {
-			preparedStatement.setString(1, user.getName());
-			preparedStatement.setString(2, user.getEmail());
-			preparedStatement.setString(3, user.getNumber());
-			preparedStatement.executeUpdate();
-		} catch (SQLException e) {
-			printSQLException(e);
-		}
-	}
-//Need to add to student, then add search function
-	public boolean updateLesson(Lesson lesson, String userList) throws SQLException {
-		boolean rowUpdated;
-		try (Connection connection = getConnection();
-				PreparedStatement statement = connection.prepareStatement(UPDATE_LESSONS_SQL);) {
-			statement.setString(1, lesson.getName());
-			statement.setString(2, userList);
-			statement.setInt(3, lesson.getId());
-
-			rowUpdated = statement.executeUpdate() > 0;
-		}
-		return rowUpdated;
-	}	
-	
-	public void insertLesson(Lesson lesson, int weeks, String userList) throws SQLException {
-		// try-with-resource statement will auto close the connection.
-		try (Connection connection = getConnection();
-				PreparedStatement preparedStatement = connection.prepareStatement(INSERT_LESSONS_SQL)) {
-			String start_date = lesson.getstart_date();
-			String end_date = lesson.getend_date();
-			String name = lesson.getName();
-			preparedStatement.setString(1, start_date);
-			preparedStatement.setString(2, end_date);
-			preparedStatement.setString(3, name);
-			preparedStatement.setString(4, userList);
-			preparedStatement.executeUpdate();
-			Calendar calendar = Calendar.getInstance();
-			DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm");
-			Timestamp sq = null;
-			if (weeks>0) {
-				for (int i=0;i<weeks;i++) {
-					try {
-						calendar.setTime((Date)formatter.parse(start_date));
-					} catch (Exception e) {
-						;
-					}
-			        calendar.add(Calendar.DAY_OF_YEAR, 7);
-			        sq = new java.sql.Timestamp(calendar.getTime().getTime());
-			        start_date = sq.toString();
-			        System.out.println(start_date);
-			        preparedStatement.setString(1, start_date);
-			            
-			        try {
-						calendar.setTime((Date)formatter.parse(end_date));
-					} catch (Exception e) {
-						;
-					}
-			        calendar.add(Calendar.DAY_OF_YEAR, 7);
-			        sq = new java.sql.Timestamp(calendar.getTime().getTime());
-			        end_date = sq.toString();
-			        preparedStatement.setString(2, end_date);
-
-					preparedStatement.executeUpdate();
-				}
-			}
-		} catch (SQLException e) {
-			printSQLException(e);
-		}
-	}
-
-	public Lesson selectLesson(int id) {
-		Lesson lesson = null;
-		// Step 1: Establishing a Connection
-		try (Connection connection = getConnection();
-				// Step 2:Create a statement using connection object
-				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_LESSON_BY_ID);) {
-			preparedStatement.setInt(1, id);
-			// Step 3: Execute the query or update query
-			ResultSet rs = preparedStatement.executeQuery();
-
-			// Step 4: Process the ResultSet object.
-			while (rs.next()) {
-				String name = rs.getString("text");
-				String start_date = rs.getString("start_date");
-				String end_date = rs.getString("end_date");
-				lesson = new Lesson(id, name, start_date, end_date);
-			}
-		} catch (SQLException e) {
-			printSQLException(e);
-		}
-		return lesson;
-	}	
-
-
-	public String getLessonUserList(int id) {
-		String userList = null;
-		// Step 1: Establishing a Connection
-		try (Connection connection = getConnection();
-				// Step 2:Create a statement using connection object
-				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_LESSON_USERLIST_BY_ID);) {
-			preparedStatement.setInt(1, id);
-			// Step 3: Execute the query or update query
-			ResultSet rs = preparedStatement.executeQuery();
-			// Step 4: Process the ResultSet object.
-			while (rs.next()) {
-				userList = rs.getString("users");
-			}
-		} catch (SQLException e) {
-			printSQLException(e);
-		}
-		return userList;
-	}		
-	
-	public User selectUser(int id) {
-		User user = null;
-		// Step 1: Establishing a Connection
-		try (Connection connection = getConnection();
-				// Step 2:Create a statement using connection object
-				PreparedStatement preparedStatement = connection.prepareStatement(SELECT_USER_BY_ID);) {
-			preparedStatement.setInt(1, id);
-			// Step 3: Execute the query or update query
-			ResultSet rs = preparedStatement.executeQuery();
-
-			// Step 4: Process the ResultSet object.
-			while (rs.next()) {
-				String name = rs.getString("name");
-				String email = rs.getString("email");
-				String number = rs.getString("number");
-				user = new User(id, name, email, number);
-			}
-		} catch (SQLException e) {
-			printSQLException(e);
-		}
-		return user;
-	}
-
-	public List<User> selectAllUsers() {
-
-		// using try-with-resources to avoid closing resources (boiler plate code)
-		List<User> users = new ArrayList<>();
-		// Step 1: Establishing a Connection
-		try (Connection connection = getConnection();
-
-				// Step 2:Create a statement using connection object
-			PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_USERS);) {
-			// Step 3: Execute the query or update query
-			ResultSet rs = preparedStatement.executeQuery();
-
-			// Step 4: Process the ResultSet object.
-			while (rs.next()) {
-				int id = rs.getInt("id");
-				String name = rs.getString("name");
-				String email = rs.getString("email");
-				String number = rs.getString("number");
-				users.add(new User(id, name, email, number));
-			}
-		} catch (SQLException e) {
-			printSQLException(e);
-		}
-		return users;
-	}
-
-	public boolean deleteUser(int id) throws SQLException {
-		boolean rowDeleted;
-		try (Connection connection = getConnection();
-				PreparedStatement statement = connection.prepareStatement(DELETE_USERS_SQL);) {
-			statement.setInt(1, id);
-			rowDeleted = statement.executeUpdate() > 0;
-		}
-		return rowDeleted;
-	}
-
-	public boolean deleteLesson(int id) throws SQLException {
-		boolean rowDeleted;
-		try (Connection connection = getConnection();
-				PreparedStatement statement = connection.prepareStatement(DELETE_LESSONS_SQL);) {
-			statement.setInt(1, id);
-			rowDeleted = statement.executeUpdate() > 0;
-		}
-		return rowDeleted;
-	}	
-	
-	public boolean updateUser(User user) throws SQLException {
-		boolean rowUpdated;
-		try (Connection connection = getConnection();
-				PreparedStatement statement = connection.prepareStatement(UPDATE_USERS_SQL);) {
-			statement.setString(1, user.getName());
-			statement.setString(2, user.getEmail());
-			statement.setString(3, user.getNumber());
-			statement.setInt(4, user.getId());
-
-			rowUpdated = statement.executeUpdate() > 0;
-		}
-		return rowUpdated;
 	}
 	
 	private void printSQLException(SQLException ex) {
