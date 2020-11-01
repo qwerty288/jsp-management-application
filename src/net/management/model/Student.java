@@ -7,7 +7,6 @@ public class Student {
 	protected String email;
 	protected String number;
 	protected String checked;
-	protected ArrayList<String> lessons;//needs to be updated after each lesson add!!
 
 	public Student() {
 	}
