@@ -5,7 +5,6 @@ public class Lesson {
 	protected int id;
 	protected String name;
 	protected String start_date, end_date, weeks;
-	protected String[] userList;
 
 	public Lesson() {
 	}
